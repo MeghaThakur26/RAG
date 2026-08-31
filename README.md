@@ -15,7 +15,7 @@ The application allows users to ask questions about a city and intelligently use
 * 🎨 Streamlit-based web UI
 
 ## 🏗️ Architecture
-
+```text
 
                  User
                   │
@@ -43,7 +43,7 @@ The application allows users to ask questions about a city and intelligently use
                   │
                   ▼
              Final Answer
-
+```
 
 ## 🔧 Technologies Used
 

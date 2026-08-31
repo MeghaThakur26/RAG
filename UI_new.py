@@ -1,4 +1,4 @@
-
+```python
 print("STEP 1: Starting application")
 
 import streamlit as st
@@ -19,6 +19,7 @@ print(
     f"STEP 4: Agents imported successfully "
     f"({time.time() - start_time:.2f} seconds)"
 )
+
 
 # ============================================================
 # PAGE CONFIG
@@ -52,7 +53,6 @@ st.markdown(
 
     .stApp {
         background-color: #f7f8fc;
-        color: #111827;
     }
 
     .block-container {
@@ -112,15 +112,21 @@ st.markdown(
         border-radius: 14px;
     }
 
-    /* Make ALL chat text black */
+
+    /* All chat text */
+
     [data-testid="stChatMessage"],
     [data-testid="stChatMessage"] p,
     [data-testid="stChatMessage"] span,
-    [data-testid="stChatMessage"] div {
+    [data-testid="stChatMessage"] div,
+    [data-testid="stChatMessage"] li,
+    [data-testid="stChatMessage"] strong {
         color: #111827 !important;
     }
 
+
     /* User message */
+
     [data-testid="stChatMessage"]:has(
         [data-testid="chatAvatarIcon-user"]
     ) {
@@ -128,7 +134,9 @@ st.markdown(
         border: 1px solid #dbe3f5;
     }
 
+
     /* Assistant message */
+
     [data-testid="stChatMessage"]:has(
         [data-testid="chatAvatarIcon-assistant"]
     ) {
@@ -145,7 +153,8 @@ st.markdown(
     .stMarkdown,
     .stMarkdown p,
     .stMarkdown li,
-    .stMarkdown span {
+    .stMarkdown span,
+    .stMarkdown strong {
         color: #111827 !important;
     }
 
@@ -155,33 +164,23 @@ st.markdown(
 
 
     /* ========================================================
-       TOOL APPROVAL CARD
+       TOOL APPROVAL SECTION
        ======================================================== */
 
-    .approval-box {
-        padding: 20px;
-        border-radius: 14px;
-        border: 1px solid #dbe3f5;
-        background-color: #ffffff;
-        margin-top: 20px;
-        margin-bottom: 18px;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-    }
-
-    .approval-title {
-        font-size: 18px;
-        font-weight: 650;
+    .tool-approval-title {
+        font-size: 20px;
+        font-weight: 700;
         color: #111827 !important;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
 
-    .approval-description {
-        font-size: 14px;
-        color: #6b7280 !important;
-        line-height: 1.5;
+    .tool-approval-text {
+        font-size: 15px;
+        color: #4b5563 !important;
+        margin-bottom: 4px;
     }
 
-    .tool-name {
+    .tool-name-display {
         font-weight: 700;
         color: #111827 !important;
     }
@@ -241,13 +240,12 @@ st.markdown(
 
 
     /* ========================================================
-       GENERAL STREAMLIT TEXT
+       GENERAL TEXT
        ======================================================== */
 
     .stApp label,
-    .stApp small,
-    .stApp span {
-        color: #111827;
+    .stApp small {
+        color: #111827 !important;
     }
 
     </style>
@@ -324,7 +322,6 @@ for message in st.session_state.messages:
 
     elif hasattr(message, "content") and message.content:
 
-        # Tool messages should not appear as normal messages
         if not isinstance(message, ToolMessage):
 
             with st.chat_message("assistant"):
@@ -350,34 +347,32 @@ if st.session_state.pending_tool_calls:
 
     tool_name = tool_call["name"]
 
+    # --------------------------------------------------------
+    # CLEAN NATIVE STREAMLIT APPROVAL UI
+    # --------------------------------------------------------
 
-    # --------------------------------------------------------
-    # APPROVAL CARD
-    # --------------------------------------------------------
+    st.divider()
 
     st.markdown(
-        f"""
-        <div class="approval-box">
-
-            <div class="approval-title">
-                🔧 Tool Approval Required
-            </div>
-
-            <div class="approval-description">
-                The agent wants to use:
-                <span class="tool-name">{tool_name}</span>
-            </div>
-
-            <div class="approval-description"
-                 style="margin-top: 6px;">
-                Please approve this action to continue.
-            </div>
-
-        </div>
-        """,
+        '<div class="tool-approval-title">'
+        '🔧 Tool Approval Required'
+        '</div>',
         unsafe_allow_html=True
     )
 
+    st.markdown(
+        f'''
+        <div class="tool-approval-text">
+            The agent wants to use:
+            <span class="tool-name-display">{tool_name}</span>
+        </div>
+        ''',
+        unsafe_allow_html=True
+    )
+
+    st.caption(
+        "Please approve this action to continue."
+    )
 
     # --------------------------------------------------------
     # APPROVE / DENY BUTTONS
@@ -385,36 +380,57 @@ if st.session_state.pending_tool_calls:
 
     col1, col2 = st.columns(2)
 
+    # --------------------------------------------------------
+    # APPROVE
+    # --------------------------------------------------------
+
     with col1:
 
         if st.button(
             "✓  Approve",
-            use_container_width=True
+            use_container_width=True,
+            type="primary"
         ):
 
             print(
                 f"STEP 17: Approving tool: {tool_name}"
             )
 
-            tool_result = tools[tool_name].invoke(
-                tool_call
-            )
+            try:
 
-            print(
-                "STEP 18: Tool executed successfully"
-            )
-
-            st.session_state.messages.append(
-                ToolMessage(
-                    content=str(tool_result),
-                    tool_call_id=tool_call["id"]
+                tool_result = tools[tool_name].invoke(
+                    tool_call
                 )
-            )
 
-            st.session_state.pending_tool_calls = []
+                print(
+                    "STEP 18: Tool executed successfully"
+                )
 
-            st.rerun()
+                st.session_state.messages.append(
+                    ToolMessage(
+                        content=str(tool_result),
+                        tool_call_id=tool_call["id"]
+                    )
+                )
 
+                st.session_state.pending_tool_calls = []
+
+                st.rerun()
+
+            except Exception as e:
+
+                print(
+                    f"ERROR: Tool execution failed: {e}"
+                )
+
+                st.error(
+                    f"Unable to execute {tool_name}: {e}"
+                )
+
+
+    # --------------------------------------------------------
+    # DENY
+    # --------------------------------------------------------
 
     with col2:
 
@@ -457,7 +473,6 @@ if (
 
     last_message = st.session_state.messages[-1]
 
-
     # --------------------------------------------------------
     # TOOL MESSAGE → CONTINUE AGENT
     # --------------------------------------------------------
@@ -472,49 +487,59 @@ if (
             "STEP 22: Invoking LLM"
         )
 
-        result = llm_tools.invoke(
-            st.session_state.messages
-        )
+        try:
 
-        print(
-            "STEP 23: LLM invocation completed"
-        )
-
-        st.session_state.messages.append(
-            result
-        )
-
-
-        # ----------------------------------------------------
-        # ANOTHER TOOL REQUIRED
-        # ----------------------------------------------------
-
-        if result.tool_calls:
+            result = llm_tools.invoke(
+                st.session_state.messages
+            )
 
             print(
-                "STEP 24: LLM requested another tool"
+                "STEP 23: LLM invocation completed"
             )
 
-            st.session_state.pending_tool_calls = (
-                result.tool_calls
+            st.session_state.messages.append(
+                result
             )
 
+            # ------------------------------------------------
+            # ANOTHER TOOL REQUIRED
+            # ------------------------------------------------
 
-        # ----------------------------------------------------
-        # FINAL ANSWER
-        # ----------------------------------------------------
+            if result.tool_calls:
 
-        else:
+                print(
+                    "STEP 24: LLM requested another tool"
+                )
+
+                st.session_state.pending_tool_calls = (
+                    result.tool_calls
+                )
+
+            # ------------------------------------------------
+            # FINAL ANSWER
+            # ------------------------------------------------
+
+            else:
+
+                print(
+                    "STEP 25: LLM returned final answer"
+                )
+
+                st.session_state.final_answer = (
+                    result.content
+                )
+
+            st.rerun()
+
+        except Exception as e:
 
             print(
-                "STEP 25: LLM returned final answer"
+                f"ERROR: LLM invocation failed: {e}"
             )
 
-            st.session_state.final_answer = (
-                result.content
+            st.error(
+                f"Unable to get a response from the AI: {e}"
             )
-
-        st.rerun()
 
 
 # ============================================================
@@ -544,7 +569,6 @@ if user_input:
         "STEP 28: User entered input"
     )
 
-
     # --------------------------------------------------------
     # ADD USER MESSAGE
     # --------------------------------------------------------
@@ -557,7 +581,6 @@ if user_input:
         human_message
     )
 
-
     # --------------------------------------------------------
     # INVOKE AGENT
     # --------------------------------------------------------
@@ -566,55 +589,63 @@ if user_input:
         "STEP 29: Invoking LLM with user message"
     )
 
-    result = llm_tools.invoke(
-        st.session_state.messages
-    )
+    try:
 
-    print(
-        "STEP 30: LLM invocation completed"
-    )
-
-
-    # --------------------------------------------------------
-    # SAVE AGENT RESPONSE
-    # --------------------------------------------------------
-
-    st.session_state.messages.append(
-        result
-    )
-
-
-    # --------------------------------------------------------
-    # AGENT REQUESTS TOOL
-    # --------------------------------------------------------
-
-    if result.tool_calls:
+        result = llm_tools.invoke(
+            st.session_state.messages
+        )
 
         print(
-            "STEP 31: Agent requested a tool"
+            "STEP 30: LLM invocation completed"
         )
 
-        st.session_state.pending_tool_calls = (
-            result.tool_calls
+        # ----------------------------------------------------
+        # SAVE AGENT RESPONSE
+        # ----------------------------------------------------
+
+        st.session_state.messages.append(
+            result
         )
 
+        # ----------------------------------------------------
+        # AGENT REQUESTS TOOL
+        # ----------------------------------------------------
 
-    # --------------------------------------------------------
-    # AGENT ANSWERS DIRECTLY
-    # --------------------------------------------------------
+        if result.tool_calls:
 
-    else:
+            print(
+                "STEP 31: Agent requested a tool"
+            )
+
+            st.session_state.pending_tool_calls = (
+                result.tool_calls
+            )
+
+        # ----------------------------------------------------
+        # AGENT ANSWERS DIRECTLY
+        # ----------------------------------------------------
+
+        else:
+
+            print(
+                "STEP 32: Agent returned direct answer"
+            )
+
+            st.session_state.final_answer = (
+                result.content
+            )
+
+        st.rerun()
+
+    except Exception as e:
 
         print(
-            "STEP 32: Agent returned direct answer"
+            f"ERROR: LLM invocation failed: {e}"
         )
 
-        st.session_state.final_answer = (
-            result.content
+        st.error(
+            f"Unable to get a response from the AI: {e}"
         )
-
-
-    st.rerun()
 
 
 # ============================================================

@@ -98,6 +98,15 @@ def get_news(city: str) -> str:
 # LLM
 # ============================================================
 
+mistral_key = os.getenv("MISTRAL_API_KEY")
+
+if not mistral_key:
+    raise ValueError(
+        "MISTRAL_API_KEY is not configured."
+    )
+
+print("MISTRAL_API_KEY found")
+
 llm = ChatMistralAI(
     model="mistral-small-2603"
 )

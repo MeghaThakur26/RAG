@@ -6,3 +6,4 @@ langchain-mistralai
 langchain-community
 rich
 langchain.tools
+tavily-python

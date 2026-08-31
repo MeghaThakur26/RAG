@@ -1,4 +1,4 @@
-```python
+
 print("STEP 1: Starting application")
 
 import streamlit as st

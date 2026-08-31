@@ -5,3 +5,4 @@ python-dotenv
 langchain-mistralai
 langchain-community
 rich
+langchain.tools
